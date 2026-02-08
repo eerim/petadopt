@@ -1,12 +1,24 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const path = require("path");
+const cors = require("cors");
 const connectDB = require("./config/db");
 const adoptionRoutes = require("./routes/adoption");
 
 dotenv.config();
 
 const app = express();
+
+app.use(cors({
+  origin: [
+    "http://localhost:5001",
+    "http://localhost:5500",
+    "https://petadopt-x17x.onrender.com"
+  ],
+  credentials: true
+}));
+
+app.use(express.json());
 app.use(express.json());
 
 connectDB();

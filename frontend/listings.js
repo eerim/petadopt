@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5001";
+const API_BASE = "https://petadopt-x17x.onrender.com";
 const token = localStorage.getItem("token");
 
 const grid = document.getElementById("listingsGrid");

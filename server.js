@@ -37,6 +37,7 @@ app.use("/api/users", require("./routes/userroutes"));
 app.use("/api/pets", require("./routes/petroutes"));
 app.use("/api/external", require("./routes/external"));
 app.use("/api/adoptions", require("./routes/adoption"));
+app.use("/api/messages", require("./routes/messages"));
 
 app.use((err, req, res, next) => {
   console.error(err);

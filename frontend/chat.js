@@ -1,11 +1,12 @@
 (function () {
-  const STORE_PREFIX = "chat_store_v2_";
+  const API_BASE =
+    window.location.origin.includes("localhost")
+      ? "http://localhost:5001"
+      : window.location.origin;
   const FLOATING_SELECTOR = ".notification-toggle";
 
   let currentUser = null;
-  let storageKey = null;
   let threads = [];
-
   let overlay;
   let modal;
   let messagesEl;
@@ -19,6 +20,7 @@
   let panelEmptyEl;
   let badgeEl;
   let activeThread = null;
+
   const noopToast = (message, type = "info") => {
     const fallback = type === "success"
       ? window.notifySuccess || window.notify
@@ -38,6 +40,32 @@
     ensureOverlay();
     ensureInboxPanel();
   });
+
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
+  async function apiRequest(path, options = {}) {
+    const token = getToken();
+    const headers = { ...(options.headers || {}) };
+    if (options.body && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      const error = new Error(data.message || "Request failed");
+      error.status = res.status;
+      throw error;
+    }
+    return res.json();
+  }
 
   function ensureOverlay() {
     if (overlay) return;
@@ -133,7 +161,6 @@
   function setCurrentUser(user) {
     if (!user || !user.id) {
       currentUser = null;
-      storageKey = null;
       threads = [];
       renderThreadList();
       return;
@@ -144,25 +171,31 @@
       city: user.city || "",
       phone: user.phone || ""
     };
-    storageKey = STORE_PREFIX + currentUser.id;
-    threads = loadThreads(storageKey);
-    renderThreadList();
+    refreshThreads();
   }
 
-  function loadThreads(key) {
-    try {
-      const raw = localStorage.getItem(key);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
+  async function refreshThreads(showErrors = false) {
+    if (!currentUser || !getToken()) {
+      threads = [];
+      renderThreadList();
+      return;
     }
-  }
-
-  function saveThreads(key, data) {
     try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch {
+      const data = await apiRequest("/api/messages/threads");
+      threads = data.map(item => ({
+        id: item.counterpart.id,
+        counterpart: { ...item.counterpart },
+        lastMessage: item.lastMessage || null,
+        unread: item.unread || 0,
+        messages: [],
+        messagesLoaded: false
+      }));
+      renderThreadList();
+    } catch (err) {
+      if (showErrors) {
+        noopToast(err.message || "Failed to load messages", "error");
+      }
+      console.error(err);
     }
   }
 
@@ -170,13 +203,16 @@
     return store.find(t => t.id === counterpart.id);
   }
 
-  function ensureThread(store, counterpart) {
+  function ensureThread(counterpart, store = threads) {
     let thread = getThreadFor(counterpart, store);
     if (!thread) {
       thread = {
         id: counterpart.id,
         counterpart: { ...counterpart },
-        messages: []
+        lastMessage: null,
+        unread: 0,
+        messages: [],
+        messagesLoaded: false
       };
       store.push(thread);
     } else {
@@ -185,65 +221,92 @@
     return thread;
   }
 
-  function sendMessage(counterpart, text) {
+  async function sendMessage(counterpart, text) {
     if (!currentUser) return;
-    const message = {
-      id: crypto.randomUUID?.() || String(Date.now()),
-      authorId: currentUser.id,
-      authorName: currentUser.name,
-      text,
-      timestamp: Date.now(),
-      direction: "outgoing",
-      read: true
-    };
-
-    appendMessageTo(currentUser.id, counterpart, message);
-
-    if (counterpart.id) {
-      const recipientMessage = {
-        ...message,
-        direction: "incoming",
-        read: false
+    if (!getToken()) {
+      noopToast("Login again to send messages", "info");
+      return;
+    }
+    const thread = ensureThread(counterpart);
+    try {
+      const response = await apiRequest(`/api/messages/${counterpart.id}`, {
+        method: "POST",
+        body: JSON.stringify({ text })
+      });
+      const message = mapMessage({
+        id: response.id,
+        text: response.text,
+        timestamp: response.timestamp,
+        authorId: response.authorId
+      });
+      thread.messages = thread.messages || [];
+      thread.messages.push(message);
+      thread.messagesLoaded = true;
+      thread.lastMessage = {
+        text: message.text,
+        timestamp: message.timestamp,
+        authorId: message.authorId
       };
-      appendMessageTo(counterpart.id, currentUser, recipientMessage);
-    }
-
-    inputEl.value = "";
-    noopToast(`Message sent to ${counterpart.name}`, "success");
-  }
-
-  function appendMessageTo(userId, counterpart, message) {
-    const key = STORE_PREFIX + userId;
-    const isCurrent = currentUser && userId === currentUser.id;
-    const store = isCurrent ? threads : loadThreads(key);
-    const thread = ensureThread(store, counterpart);
-    thread.messages.push(message);
-
-    if (isCurrent) {
-      saveThreads(storageKey, store);
+      thread.unread = 0;
+      renderThread(thread);
       renderThreadList();
-      if (activeThread && activeThread.id === thread.id) {
-        renderThread(thread);
-      }
-    } else {
-      saveThreads(key, store);
+      inputEl.value = "";
+      noopToast(`Message sent to ${counterpart.name}`, "success");
+    } catch (err) {
+      noopToast(err.message || "Failed to send message", "error");
     }
   }
 
-  function openChat(counterpart) {
+  async function openChat(counterpart) {
     if (!currentUser) {
       noopToast("Login to send messages", "info");
       return;
     }
     ensureOverlay();
-    const thread = ensureThread(threads, counterpart);
+    const thread = ensureThread(counterpart);
     activeThread = thread;
-    renderThread(thread);
     overlay.classList.add("open");
     document.body.classList.add("chat-open");
     panel?.classList.remove("open");
+    await maybeLoadThreadMessages(thread);
+    renderThread(thread);
     markThreadRead(thread.id);
     setTimeout(() => inputEl.focus(), 50);
+  }
+
+  async function maybeLoadThreadMessages(thread) {
+    if (thread.messagesLoaded || !getToken()) return;
+    try {
+      const data = await apiRequest(`/api/messages/with/${thread.id}`);
+      thread.messages = data.map(mapMessage);
+      thread.messagesLoaded = true;
+      thread.unread = 0;
+      if (thread.messages.length) {
+        const last = thread.messages[thread.messages.length - 1];
+        thread.lastMessage = {
+          text: last.text,
+          timestamp: last.timestamp,
+          authorId: last.authorId
+        };
+      }
+      renderThreadList();
+    } catch (err) {
+      noopToast(err.message || "Failed to load conversation", "error");
+    }
+  }
+
+  function mapMessage(payload) {
+    const timestamp = new Date(payload.timestamp).getTime();
+    const direction =
+      payload.authorId === currentUser?.id ? "outgoing" : "incoming";
+    return {
+      id: payload.id,
+      text: payload.text,
+      timestamp,
+      direction,
+      authorId: payload.authorId,
+      read: true
+    };
   }
 
   function closeChat() {
@@ -259,17 +322,18 @@
     const phone = thread.counterpart.phone || "Phone not provided";
     headerMetaEl.textContent = `${city} • ${phone}`;
     hintEl.textContent =
-      "Messages sync only on this device. Use phone or social to make sure the owner sees it";
+      "Messages sync with your account. Follow up with a call or DM if it’s urgent.";
 
     messagesEl.innerHTML = "";
-    if (!thread.messages.length) {
+    const list = thread.messages || [];
+    if (!list.length) {
       const empty = document.createElement("div");
       empty.className = "chat-message them";
       empty.textContent =
         "Start the conversation by introducing yourself and the pet you're interested in";
       messagesEl.appendChild(empty);
     } else {
-      thread.messages.forEach(msg => {
+      list.forEach(msg => {
         const bubble = document.createElement("div");
         bubble.className =
           `chat-message ${msg.direction === "incoming" ? "them" : "me"}`;
@@ -285,10 +349,10 @@
     const sorted = threads
       .map(thread => ({
         ...thread,
-        lastMessage: thread.messages[thread.messages.length - 1] || null,
-        unread: thread.messages.filter(
-          msg => msg.direction === "incoming" && !msg.read
-        ).length
+        preview: thread.lastMessage
+          ? `${thread.lastMessage.authorId === currentUser?.id ? "You: " : ""}${thread.lastMessage.text}`
+          : "No messages yet",
+        time: thread.lastMessage ? formatTime(thread.lastMessage.timestamp) : ""
       }))
       .sort((a, b) => (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0));
 
@@ -303,25 +367,19 @@
       const item = document.createElement("div");
       item.className = "notification-entry chat-thread";
       item.dataset.threadId = thread.id;
-      const preview = thread.lastMessage
-        ? `${thread.lastMessage.authorId === currentUser?.id ? "You: " : ""}${thread.lastMessage.text}`
-        : "No messages yet";
-      const timeLabel = thread.lastMessage
-        ? formatTime(thread.lastMessage.timestamp)
-        : "";
       item.innerHTML = `
         <div class="notification-entry-header">
           <span class="notification-author">${thread.counterpart.name}</span>
-          <span class="notification-time">${timeLabel}</span>
+          <span class="notification-time">${thread.time}</span>
         </div>
-        <p class="notification-message">${preview}</p>
+        <p class="notification-message">${thread.preview}</p>
         ${thread.unread ? `<span class="notification-badge">${thread.unread}</span>` : ""}
       `;
       item.addEventListener("click", () => openChat(thread.counterpart));
       panelListEl.appendChild(item);
     });
 
-    const unreadTotal = sorted.reduce((sum, t) => sum + t.unread, 0);
+    const unreadTotal = sorted.reduce((sum, t) => sum + (t.unread || 0), 0);
     updateBadge(unreadTotal);
   }
 
@@ -340,17 +398,8 @@
     if (!threadId) return;
     const thread = threads.find(t => t.id === threadId);
     if (!thread) return;
-    let changed = false;
-    thread.messages.forEach(msg => {
-      if (msg.direction === "incoming" && !msg.read) {
-        msg.read = true;
-        changed = true;
-      }
-    });
-    if (changed) {
-      saveThreads(storageKey, threads);
-      renderThreadList();
-    }
+    thread.unread = 0;
+    renderThreadList();
   }
 
   function formatTime(ts) {
@@ -366,6 +415,7 @@
 
   window.ChatWidget = {
     setCurrentUser,
-    open: openChat
+    open: openChat,
+    refresh: () => refreshThreads(true)
   };
 })();

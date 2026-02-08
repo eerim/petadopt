@@ -823,8 +823,47 @@ body.chat-open {
     bottom: 16px;
   }
 
+  .chat-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
   .chat-modal {
     width: 100%;
+    max-width: 100%;
+    border-radius: 24px 24px 0 0;
+    min-height: 60vh;
+    max-height: 90vh;
+    padding: 24px;
+  }
+
+  .chat-messages {
+    max-height: none;
+    min-height: 200px;
+  }
+
+  .chat-header {
+    position: sticky;
+    top: 0;
+    background: #fffaf3;
+    padding-bottom: 8px;
+  }
+
+  .notification-panel {
+    width: 100%;
+    right: 0;
+    left: 0;
+    top: auto;
+    bottom: -100%;
+    height: 65vh;
+    border-radius: 24px 24px 0 0;
+    padding: 20px;
+    box-shadow: 0 -10px 25px rgba(0,0,0,0.2);
+    transition: bottom 0.3s ease;
+  }
+
+  .notification-panel.open {
+    bottom: 0;
   }
 
   .scroll-top-btn {

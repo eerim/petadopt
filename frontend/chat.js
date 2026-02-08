@@ -39,10 +39,31 @@
   document.addEventListener("DOMContentLoaded", () => {
     ensureOverlay();
     ensureInboxPanel();
+    initNavToggle();
   });
 
   function getToken() {
     return localStorage.getItem("token");
+  }
+
+  function initNavToggle() {
+    const toggles = document.querySelectorAll(".nav-toggle");
+    toggles.forEach(btn => {
+      const navbar = btn.closest(".navbar");
+      if (!navbar) return;
+      btn.addEventListener("click", evt => {
+        evt.stopPropagation();
+        navbar.classList.toggle("nav-open");
+      });
+    });
+
+    document.addEventListener("click", evt => {
+      if (!evt.target.closest(".navbar")) {
+        document
+          .querySelectorAll(".navbar.nav-open")
+          .forEach(nav => nav.classList.remove("nav-open"));
+      }
+    });
   }
 
   async function apiRequest(path, options = {}) {

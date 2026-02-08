@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Profile 🐾</title>
+  <link rel="stylesheet" href="/style.css" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-left">
+    <a href="/" class="nav-logo">🐾 PetAdopt</a>
+    <a href="/" class="nav-link">Home</a>
+    <a href="/listings.html" class="nav-link">Listings</a>
+  </div>
+
+  <div class="nav-right">
+    <div id="navAuth"></div>
+
+    <div class="nav-user hidden" id="navUser">
+      <img id="profileAvatar" class="avatar" />
+      <span id="navUsername"></span>
+    </div>
+
+    <button id="logoutBtn" class="nav-btn outline">Logout</button>
+  </div>
+</nav>
+
+<main class="profile-page">
+
+  <section class="profile-info">
+    <img id="avatar" class="profile-avatar" />
+    <div>
+      <h2 id="username">Username</h2>
+      <p id="email">email@example.com</p>
+      <p id="phoneDisplay">Phone: —</p>
+      <p id="cityDisplay">City: —</p>
+    </div>
+  </section>
+
+  <section class="contact-card">
+    <h3>📞 Contacts</h3>
+    <div class="profile-form">
+      <label for="profilePhone">Phone</label>
+      <input
+        id="profilePhone"
+        type="tel"
+        placeholder="+7 (700) 000 0000"
+      />
+
+      <label for="profileCity">City</label>
+      <input
+        id="profileCity"
+        type="text"
+        placeholder="City, Country"
+      />
+
+      <button id="saveProfileBtn" class="primary-btn">
+        Save contact info
+      </button>
+      <p id="profileStatus" class="form-hint"></p>
+    </div>
+  </section>
+
+  <section class="my-pets">
+    <h3>🐾 My Adopted pets</h3>
+    <div class="pet-grid" id="myPetsGrid"></div>
+  </section>
+
+  <section class="my-pets">
+    <h3>My Adoption requests</h3>
+    <div class="request-list profile" id="myRequestsList"></div>
+  </section>
+
+  <section class="my-pets">
+    <h3>Favorites</h3>
+    <div class="pet-grid" id="favoritesGrid"></div>
+  </section>
+
+</main>
+
+<script src="/notify.js"></script>
+<script src="/chat.js"></script>
+<script src="/profile.js"></script>
+
+</body>
+</html>

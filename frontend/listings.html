@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>User Listings</title>
+
+    <link rel="stylesheet" href="/style.css" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+
+  <body>
+    <nav class="navbar">
+      <div class="nav-left">
+        <a href="/" class="nav-logo">🐾 PetAdopt</a>
+        <a href="/" class="nav-link">Home</a>
+        <a href="/listings.html" class="nav-link">Listings</a>
+      </div>
+
+      <div class="nav-right">
+        <div id="navAuth"></div>
+
+        <div class="nav-user hidden" id="navUser">
+          <img id="profileAvatar" class="avatar" />
+          <span id="navUsername"></span>
+        </div>
+
+        <button id="logoutBtn" class="nav-btn outline">
+          Logout
+        </button>
+      </div>
+    </nav>
+
+    <div class="listings-container">
+      <div class="add-pet-wrapper">
+        <button id="addPetBtn" class="primary-btn add-pet-btn">
+          Add Pet
+        </button>
+      </div>
+
+      <div class="pet-grid" id="listingsGrid"></div>
+    </div>
+
+    <div id="addPetModal" class="modal hidden">
+      <div class="modal-content">
+        <h2>Add new pet 🐾</h2>
+
+        <input type="text" id="petName" placeholder="Pet name" />
+        <input type="text" id="petType" placeholder="Type (Cat / Dog)" />
+        <input type="number" id="petAge" placeholder="Age" />
+        <input type="file" id="petImageInput" accept="image/*" />
+
+        <img id="imagePreview" class="image-preview hidden" />
+
+        <p id="formError" class="form-error hidden"></p>
+
+        <div class="modal-actions">
+          <button id="createPetBtn" class="primary-btn">
+            Create
+          </button>
+          <button id="closeModalBtn" class="outline-btn">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/notify.js"></script>
+    <script src="/chat.js"></script>
+    <script src="/listings.js"></script>
+  </body>
+</html>

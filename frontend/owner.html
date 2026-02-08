@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owner Profile</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="/" class="nav-logo">🐾 PetAdopt</a>
+      <a href="/" class="nav-link">Home</a>
+      <a href="/listings.html" class="nav-link">📋 Listings</a>
+    </div>
+
+    <div class="nav-right">
+      <div id="navAuth"></div>
+      <div class="nav-user hidden" id="navUser">
+        <img id="profileAvatar" class="avatar" />
+        <span id="navUsername"></span>
+      </div>
+      <button id="logoutBtn" class="nav-btn outline">Logout</button>
+    </div>
+  </nav>
+
+  <main class="profile-page">
+    <section class="profile-info">
+      <img id="ownerAvatar" class="profile-avatar" />
+      <div>
+        <h2 id="ownerName">Owner</h2>
+        <p id="ownerCity">City not specified</p>
+        <p id="ownerPhone">Phone not provided</p>
+        <button id="messageOwnerBtn" class="primary-btn">Message owner</button>
+      </div>
+    </section>
+
+    <section class="my-pets">
+      <h3>Pets shared by this owner</h3>
+      <div class="pet-grid" id="ownerPetsGrid"></div>
+    </section>
+  </main>
+
+  <script src="/notify.js"></script>
+  <script src="/chat.js"></script>
+  <script src="/owner.js"></script>
+</body>
+</html>

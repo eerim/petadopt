@@ -13,7 +13,10 @@ const GEO_IP_URL = "https://ipapi.co/json/";
 const GEO_REVERSE_URL = "https://api.bigdatacloud.net/data/reverse-geocode-client";
 
 
-const API_BASE = "https://petadopt-x17x.onrender.com";
+const API_BASE =
+  window.location.origin.includes("localhost")
+    ? "http://localhost:5001"
+    : window.location.origin;
 const token = localStorage.getItem("token");
 const petGrid = document.getElementById("petGrid");
 const loadMoreBtn = document.getElementById("loadMore");
